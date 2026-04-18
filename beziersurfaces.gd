@@ -11,7 +11,6 @@ var ControlPointInspector
 
 var LoadingBar
 
-
 func _enter_tree() -> void:
 	add_custom_type("ControlPoint", "MeshInstance3D", ControlPointScript, BezIcon)
 
@@ -22,7 +21,6 @@ func _enter_tree() -> void:
 
 	ControlPointInspector = preload("res://addons/beziersurfaces/Scripts/control_point_inspector_features.gd").new()
 	add_inspector_plugin(ControlPointInspector)
-
 
 func _exit_tree() -> void:
 	remove_custom_type("BezierSurfaceBuilder")

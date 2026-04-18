@@ -9,7 +9,7 @@ namespace BezierSurfaces
 	{
 		public Vector2 Loc = new Vector2(0, 0);
 
-		private bool HasSurface = false;
+		public bool HasSurface = false;
 
 
 		public void CreateSurface()

@@ -2,73 +2,174 @@ using Godot;
 using System;
 using System.Numerics;
 
+#nullable enable
 namespace BezierSurfaces.Types
 {
 	namespace VectorVariants
 	{
 		namespace HalfVector
 		{
-			public struct HalfVector2
+			public struct HalfVector2 : IEquatable<HalfVector2>
 			{
-				public HalfVector2(Half X, Half Y)
+				public HalfVector2(Half x, Half y)
 				{
-					x = X;
-					y = Y;
+					X = x;
+					Y = y;
 				}
 				
-				public Half x { get; }
-				public Half y { get; }
+				public Half X { get; }
+				public Half Y { get; }
 				
-				public override string ToString() => $"({x}, {y})";
+				public override string ToString() => $"({X}, {Y})";
+
+				public bool Equals(HalfVector2 other)
+				{
+					return X == other.X && Y == other.Y;
+				}
+
+				public override bool Equals(object? obj)
+				{
+					return obj is HalfVector2 other && Equals(other);
+				}
+
+				public override int GetHashCode()
+    			{
+					return HashCode.Combine(X, Y);
+    			}
+
+				public static bool operator ==(HalfVector2 left, HalfVector2 right)
+				{
+					return left.Equals(right);
+				}
+
+				public static bool operator !=(HalfVector2 left, HalfVector2 right)
+				{
+					return !left.Equals(right);
+				}
 			}
 			
-			public struct HalfVector3
+			public struct HalfVector3 : IEquatable<HalfVector3>
 			{
-				public HalfVector3(Half X, Half Y, Half Z)
+				public HalfVector3(Half x, Half y, Half z)
 				{
-					x = X;
-					y = Y;
-					z = Z;
+					X = x;
+					Y = y;
+					Z = z;
 				}
 				
-				public Half x { get; init; }
-				public Half y { get; init; }
-				public Half z { get; init; }
+				public Half X { get; init; }
+				public Half Y { get; init; }
+				public Half Z { get; init; }
 				
-				public override string ToString() => $"({z}, {y}, {z})";
+				public override string ToString() => $"({X}, {Y}, {Z})";
+
+				public bool Equals(HalfVector3 other)
+				{
+					return X == other.X && Y == other.Y && Z == other.Z;
+				}
+
+				public override bool Equals(object? obj)
+				{
+					return obj is HalfVector3 other && Equals(other);
+				}
+
+				public override int GetHashCode()
+    			{
+					return HashCode.Combine(X, Y, Z);
+    			}
+
+				public static bool operator ==(HalfVector3 left, HalfVector3 right)
+				{
+					return left.Equals(right);
+				}
+
+				public static bool operator !=(HalfVector3 left, HalfVector3 right)
+				{
+					return !left.Equals(right);
+				}
 			}
 		}
 
 		namespace ByteVector
 		{
-			public struct ByteVector2
+			public struct ByteVector2 : IEquatable<ByteVector2>
 			{
-				public ByteVector2(byte X, byte Y)
+				public ByteVector2(byte x, byte y)
 				{
-					x = X;
-					y = Y;
+					X = x;
+					Y = y;
 				}
 				
-				public byte x { get; }
-				public byte y { get; }
+				public byte X { get; }
+				public byte Y { get; }
 				
-				public override string ToString() => $"({x}, {y})";
+				public override string ToString() => $"({X}, {Y})";
+
+				public bool Equals(ByteVector2 other)
+				{
+					return X == other.X && Y == other.Y;
+				}
+
+				public override bool Equals(object? obj)
+				{
+					return obj is ByteVector2 other && Equals(other);
+				}
+
+				public override int GetHashCode()
+    			{
+					return HashCode.Combine(X, Y);
+    			}
+
+				public static bool operator ==(ByteVector2 left, ByteVector2 right)
+				{
+					return left.Equals(right);
+				}
+
+				public static bool operator !=(ByteVector2 left, ByteVector2 right)
+				{
+					return !left.Equals(right);
+				}
 			}
 			
-			public struct ByteVector3
+			public struct ByteVector3 : IEquatable<ByteVector3>
 			{
-				public ByteVector3(byte X, byte Y, byte Z)
+				public ByteVector3(byte x, byte y, byte z)
 				{
-					x = X;
-					y = Y;
-					z = Z;
+					X = x;
+					Y = y;
+					Z = z;
 				}
 				
-				public byte x { get; }
-				public byte y { get; }
-				public byte z { get; }
+				public byte X { get; }
+				public byte Y { get; }
+				public byte Z { get; }
 				
-				public override string ToString() => $"({x}, {y}, {z})";
+				public override string ToString() => $"({X}, {Y}, {Z})";
+
+				public bool Equals(ByteVector3 other)
+				{
+					return X == other.X && Y == other.Y && Z == other.Z;
+				}
+
+				public override bool Equals(object? obj)
+				{
+					return obj is ByteVector3 other && Equals(other);
+				}
+
+				public override int GetHashCode()
+    			{
+					return HashCode.Combine(X, Y, Z);
+    			}
+
+				public static bool operator ==(ByteVector3 left, ByteVector3 right)
+				{
+					return left.Equals(right);
+				}
+
+				public static bool operator !=(ByteVector3 left, ByteVector3 right)
+				{
+					return !left.Equals(right);
+				}
 			}
 		}
 
@@ -76,32 +177,82 @@ namespace BezierSurfaces.Types
 		{
 			public struct BitVector2
 			{
-				public BitVector2(bool X, bool Y)
+				public BitVector2(bool x, bool y)
 				{
-					x = X;
-					y = Y;
+					X = x;
+					Y = y;
 				}
 				
-				public bool x { get; }
-				public bool y { get; }
+				public bool X { get; }
+				public bool Y { get; }
 				
-				public override string ToString() => $"({x}, {y})";
+				public override string ToString() => $"({X}, {Y})";
+
+				public bool Equals(BitVector2 other)
+				{
+					return X == other.X && Y == other.Y;
+				}
+
+				public override bool Equals(object? obj)
+				{
+					return obj is BitVector2 other && Equals(other);
+				}
+
+				public override int GetHashCode()
+    			{
+					return HashCode.Combine(X, Y);
+    			}
+
+				public static bool operator ==(BitVector2 left, BitVector2 right)
+				{
+					return left.Equals(right);
+				}
+
+				public static bool operator !=(BitVector2 left, BitVector2 right)
+				{
+					return !left.Equals(right);
+				}
 			}
 			
 			public struct BitVector3
 			{
-				public BitVector3(bool X, bool Y, bool Z)
+				public BitVector3(bool x, bool y, bool z)
 				{
-					x = X;
-					y = Y;
-					z = Z;
+					X = x;
+					Y = y;
+					Z = z;
 				}
 				
-				public bool x { get; init; }
-				public bool y { get; init; }
-				public bool z { get; init; }
+				public bool X { get; init; }
+				public bool Y { get; init; }
+				public bool Z { get; init; }
 				
-				public override string ToString() => $"({z}, {y}, {z})";
+				public override string ToString() => $"({X}, {Y}, {Z})";
+
+				public bool Equals(BitVector3 other)
+				{
+					return X == other.X && Y == other.Y && Z == other.Z;
+				}
+
+				public override bool Equals(object? obj)
+				{
+					return obj is BitVector3 other && Equals(other);
+				}
+
+				public override int GetHashCode()
+    			{
+					return HashCode.Combine(X, Y, Z);
+    			}
+
+				public static bool operator ==(BitVector3 left, BitVector3 right)
+				{
+					return left.Equals(right);
+				}
+
+				public static bool operator !=(BitVector3 left, BitVector3 right)
+				{
+					return !left.Equals(right);
+				}
 			}
 		}
 	}
