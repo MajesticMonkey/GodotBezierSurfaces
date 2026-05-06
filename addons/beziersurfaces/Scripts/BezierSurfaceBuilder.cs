@@ -264,10 +264,7 @@ namespace BezierSurfaceBuilder
 
 			for (int i = 0; i < outdatedSurfaces.Count; i++)
 			{
-				ulong StartTime = Time.GetTicksUsec();
 				outdatedSurfaces[i].ReloadSurface();
-				ulong EndTime = Time.GetTicksUsec();
-				GD.Print("Passed mesh creation in " + (EndTime - StartTime) + " μs");
 			}
 		}
 		
@@ -411,7 +408,6 @@ namespace BezierSurfaceBuilder
 				ArrayMesh arrMesh = await CreateArrayMesh();
 				
 
-				ulong StartTime = Time.GetTicksUsec();
 				Godot.Collections.Array<Node> children = Patch.GetChildren();
 				for (int i = 0; i < children.Count; i++)
 				{
@@ -434,9 +430,6 @@ namespace BezierSurfaceBuilder
 						node3DChild.Hide();
 					}
 				}
-
-				ulong EndTime = Time.GetTicksUsec();
-				GD.Print("Created new mesh in " + (EndTime - StartTime) + " μs");
 
 				if (QueuedForReload)
 				{
