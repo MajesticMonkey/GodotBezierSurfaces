@@ -29,16 +29,6 @@ namespace BezierSurfaceBuilder
 		
 		[Export]
 		public bool AutoUpdate = true; // Whether or not to continuously update the surfaces.
-		[ExportGroup("Do")]
-		
-		private BitVector3 Do = new BitVector3(true, true, true); // Determines whether or not we do the full Bezier transform calculation for a given direction, as it saves computing power and is equally accurate when the contol points are evenly spaced.
-
-		[Export]
-		public bool DoX = true;
-		[Export]
-		public bool DoY = true;
-		[Export]
-		public bool DoZ = true;
 
 		[ExportGroup("Control Nodes")]
 		
@@ -193,8 +183,6 @@ namespace BezierSurfaceBuilder
 
 		public void UpdateMaintenance()
 		{
-			Do = new BitVector3(DoX, DoY, DoZ);
-
 			bool RecalcNB = !(CNSize.X == CNXSize);
 			bool RecalcMB = !(CNSize.Y == CNYSize);
 
@@ -239,10 +227,9 @@ namespace BezierSurfaceBuilder
 		{
 			UpdateMaintenance();
 			LoadPercent = 0;
-			Do = new BitVector3(DoX, DoY, DoZ);
 			for (int i = 0; i < SurfaceNetwork.Count; i++)
 			{
-				SurfaceNetwork[i].ReloadSurface(SurfaceNetwork.Count, i);
+				SurfaceNetwork[i].ReloadSurface();
 			}
 		}
 
@@ -250,7 +237,6 @@ namespace BezierSurfaceBuilder
 		{
 			UpdateMaintenance();
 			LoadPercent = 0;
-			Do = new BitVector3(DoX, DoY, DoZ);
 			List<ControlPoint> outdatedControlNodes = new List<ControlPoint>();
 			for (int i = 0; i < ControlNetwork.Count; i++)
 			{
@@ -278,7 +264,10 @@ namespace BezierSurfaceBuilder
 
 			for (int i = 0; i < outdatedSurfaces.Count; i++)
 			{
-				outdatedSurfaces[i].ReloadSurface(outdatedSurfaces.Count, i);
+				ulong StartTime = Time.GetTicksUsec();
+				outdatedSurfaces[i].ReloadSurface();
+				ulong EndTime = Time.GetTicksUsec();
+				GD.Print("Passed mesh creation in " + (EndTime - StartTime) + " μs");
 			}
 		}
 		
@@ -362,12 +351,13 @@ namespace BezierSurfaceBuilder
 			public Vector2 CNLoc = new Vector2(0, 0);
 			
 			public Byte LOD = 1;
-			
-			public Vector3[,] CN;
 
 			public MeshInstance3D Patch;
 
 			readonly BezierSurfaceBuilder parent;
+
+			private bool Loading = false;
+			private bool QueuedForReload = false;
 
 			#region Lambda Expressions
 				List<List<ControlPoint>> ControlNetwork => parent.ControlNetwork;
@@ -375,7 +365,6 @@ namespace BezierSurfaceBuilder
 				ByteVector2 CNSize => parent.CNSize;
 				ByteVector2 SVMSize => parent.SVMSize;
 				ByteVector2 SSize => parent.SSize;
-				BitVector3 Do => parent.Do;
 				Matrix NB => parent.NB;
 				Matrix MB => parent.MB;
 				Matrix NBD => parent.NBD;
@@ -407,8 +396,22 @@ namespace BezierSurfaceBuilder
 				ReloadSurface();
 			}
 			
-			public void ReloadSurface(int SurfaceCount = 1, int SurfaceIndex = 0)
+			public async void ReloadSurface()
 			{
+				if (Loading)
+				{
+					QueuedForReload = true;
+					return;
+				}
+				else
+				{
+					Loading = true;
+				}
+
+				ArrayMesh arrMesh = await CreateArrayMesh();
+				
+
+				ulong StartTime = Time.GetTicksUsec();
 				Godot.Collections.Array<Node> children = Patch.GetChildren();
 				for (int i = 0; i < children.Count; i++)
 				{
@@ -416,8 +419,7 @@ namespace BezierSurfaceBuilder
 					children[i].QueueFree();
 				}
 
-
-				ArrayMesh arrMesh = CreateArrayMesh(SurfaceCount, SurfaceIndex);
+				
 
 				Patch.SetMesh(arrMesh);
 
@@ -432,6 +434,19 @@ namespace BezierSurfaceBuilder
 						node3DChild.Hide();
 					}
 				}
+
+				ulong EndTime = Time.GetTicksUsec();
+				GD.Print("Created new mesh in " + (EndTime - StartTime) + " μs");
+
+				if (QueuedForReload)
+				{
+					QueuedForReload = false;
+					ReloadSurface();	
+				}
+				else
+				{
+					Loading = false;
+				}
 			}
 
 			private Vector3[,] GetControlNodes()
@@ -442,9 +457,6 @@ namespace BezierSurfaceBuilder
 					for (int j = 0; j + CNLoc.Y < ControlNetwork[i + (int)CNLoc.X].Count && j < CNSize.Y; j++)
 					{
 						CN[i, j] = ControlNetwork[i + (int)CNLoc.X][j + (int)CNLoc.Y].Position;
-						if (!Do.X) { CN[i, j].X = ((CNLoc.X + i) * ControlPointSpacing.X); }
-						if (!Do.Y) { CN[i, j].Y = 0; }
-						if (!Do.Z) { CN[i, j].Z = ((CNLoc.Y + j) * ControlPointSpacing.Y); }
 					}
 				}
 				return CN;
@@ -468,20 +480,21 @@ namespace BezierSurfaceBuilder
 				return Patch;
 			}
 
-			private ArrayMesh CreateArrayMesh(int SurfaceCount = 1, int SurfaceIndex = 0)
+			private async Task<ArrayMesh> CreateArrayMesh()
 			{
-				ByteVector2 LODedSVMSize = GetLODedSVMSize();
+				var LODedSVMSize = GetLODedSVMSize();
 
+				var tCN = GetControlNodes();
 
-				CN = GetControlNodes();
+				var tNB = NB;
+				var tMB = MB;
+				var tNBD = NBD;
+				var tMBD = MBD;
 
-				
+				Vector3[,] STM = await Task.Run(() => GetSurfaceTransforms(tNB, tMB, tCN, LODedSVMSize));
+				Vector3[,] SNM = await Task.Run(() => GetSurfaceNormals(tNB, tMB, tNBD, tMBD, tCN, LODedSVMSize));
+
 				ArrayMesh ArrMesh = new ArrayMesh();
-
-
-				Vector3[,] STM = GetSurfaceTransforms(SurfaceCount, SurfaceIndex);
-				Vector3[,] SNM = GetSurfaceNormals(SurfaceCount, SurfaceIndex);
-
 
 				var SurfaceArray = new Godot.Collections.Array();
 
@@ -500,48 +513,31 @@ namespace BezierSurfaceBuilder
 			}
 
 			#region Create Array Mesh
-			private Vector3[,] GetSurfaceTransforms(int SurfaceCount = 1, int SurfaceIndex = 0)
+			private static Vector3[,] GetSurfaceTransforms(Matrix NB, Matrix MB, Vector3[,] CN, ByteVector2 LODedSVMSize)
 			{
-				ByteVector2 LODedSVMSize = GetLODedSVMSize();
 
 				Vector3[,] STMForklift = new Vector3[LODedSVMSize.X, LODedSVMSize.Y];
 				for (byte u = 0; u < LODedSVMSize.X; u++)
 				{
 					for (byte v = 0; v < LODedSVMSize.Y; v++)
 					{
-						STMForklift[u, v] = ComputeVertexVector(u, v, 0);
-
-						int count = u * LODedSVMSize.Y + v;
-
-						parent.LoadPercent =
-						((float)SurfaceIndex/(float)SurfaceCount) +
-						((float)count/((float)LODedSVMSize.X * (float)LODedSVMSize.Y * (float)SurfaceCount * (float)2));
-
-						// The math for the progress bar isn't that hard to understand, just read it a couple times.
+						STMForklift[u, v] = ComputeVertexVector(u, v, 0, NB, MB, CN, LODedSVMSize);
 					}
 				}
 				return STMForklift;
 			}
 			
-			private Vector3[,] GetSurfaceNormals(int SurfaceCount = 1, int SurfaceIndex = 0)
+			private static Vector3[,] GetSurfaceNormals(Matrix NB, Matrix MB, Matrix NBD, Matrix MBD, Vector3[,] CN, ByteVector2 LODedSVMSize)
 			{
-				ByteVector2 LODedSVMSize = GetLODedSVMSize();
 
-				Vector3[,] SNMForklift = new Vector3[SVMSize.X, SVMSize.Y];				
+				Vector3[,] SNMForklift = new Vector3[LODedSVMSize.X, LODedSVMSize.Y];				
 				
-				float firsthalf = (float)1 / ((float)SurfaceCount * (float)2);
 				
 				for (byte u = 0; u < LODedSVMSize.X; u++)
 				{
 					for (byte v = 0; v < LODedSVMSize.Y; v++)
 					{
-						SNMForklift[u, v] = ComputeVertexNormal(u, v);
-
-						int count = u * LODedSVMSize.Y + v;
-
-						parent.LoadPercent =
-						((float)SurfaceIndex/(float)SurfaceCount) + firsthalf +
-						((float)count/((float)LODedSVMSize.X * (float)LODedSVMSize.Y * (float)SurfaceCount * (float)2));
+						SNMForklift[u, v] = ComputeVertexNormal(u, v, NB, MB, NBD, MBD, CN, LODedSVMSize);
 					}
 				}
 
@@ -549,10 +545,10 @@ namespace BezierSurfaceBuilder
 				return SNMForklift;
 			}
 
-			private Vector3 ComputeVertexNormal(byte u, byte v)
+			private static Vector3 ComputeVertexNormal(byte u, byte v, Matrix NB, Matrix MB, Matrix NBD, Matrix MBD, Vector3[,] CN, ByteVector2 LODedSVMSize)
 			{
-				Vector3 TangentA = ComputeVertexVector(u, v, 1);
-				Vector3 TangentB = ComputeVertexVector(u, v, 2);
+				Vector3 TangentA = ComputeVertexVector(u, v, 1, NBD, MB, CN, LODedSVMSize);
+				Vector3 TangentB = ComputeVertexVector(u, v, 2, NB, MBD, CN, LODedSVMSize);
 
 				if (CN[0, 0].X < 0)
 				{
@@ -571,32 +567,28 @@ namespace BezierSurfaceBuilder
 				return Normal;
 			}
 
-			private Vector3 ComputeVertexVector(byte u, byte v, byte NormVer) // Calculates the transform or tangent vector of a given point on the bezier surface
+			private static Vector3 ComputeVertexVector(byte u, byte v, int NormVer, Matrix tNB, Matrix tMB, Vector3[,] CN, ByteVector2 LODedSVMSize) // Calculates the transform or tangent vector of a given point on the bezier surface
 			{
 				// This code is going to be hard to read no matter what.
 				// I've shorted down many of the names so that its compact, which makes it more readable in my opinion.
-				Matrix tNB = NB; // temp NB
-				Matrix tMB = MB; // Temp MB
-				Matrix powerBasisU = PowerBasis(CNSize.X);
-				Matrix powerBasisV = PowerBasis(CNSize.Y);
-
-				ByteVector2 LODedSVMSize = GetLODedSVMSize();
+				Matrix powerBasisU = PowerBasis(CN.GetLength(0));
+				Matrix powerBasisV = PowerBasis(CN.GetLength(1));
 
 				float uF = (float)u / (float)(LODedSVMSize.X - 1);
 				float vF = (float)v / (float)(LODedSVMSize.Y - 1);
 
-				if (NormVer == 1) { tNB = NBD; powerBasisU = PowerDiv(powerBasisU); } else
-				if (NormVer == 2) { tMB = MBD; powerBasisV = PowerDiv(powerBasisV); }
+				if (NormVer == 1) { powerBasisU = PowerDiv(powerBasisU); }
+				if (NormVer == 2) { powerBasisV = PowerDiv(powerBasisV); }
 
 				Matrix pU = PowsOfI(uF, powerBasisU).Transpose();
 				Matrix pV = PowsOfI(vF, powerBasisV);
 				
-				Matrix cNX = new Matrix(CNSize.X, CNSize.Y);
-				Matrix cNY = new Matrix(CNSize.X, CNSize.Y);
-				Matrix cNZ = new Matrix(CNSize.X, CNSize.Y);
-				for (int i = 0; i < CNSize.X; i++)
+				Matrix cNX = new Matrix(CN.GetLength(0), CN.GetLength(1));
+				Matrix cNY = new Matrix(CN.GetLength(0), CN.GetLength(1));
+				Matrix cNZ = new Matrix(CN.GetLength(0), CN.GetLength(1));
+				for (int i = 0; i < CN.GetLength(0); i++)
 				{
-					for (int j = 0; j < CNSize.Y; j++)
+					for (int j = 0; j < CN.GetLength(1); j++)
 					{
 						cNX[i, j] = CN[i, j].X;
 						cNY[i, j] = CN[i, j].Y;
@@ -609,11 +601,9 @@ namespace BezierSurfaceBuilder
 				Matrix pUProdTMB = pU.Product(tMB);
 				Matrix tNBProdPV = tNB.Product(pV);
 
-
-				// Note: Fix Do.x false and Do.z false, they don't work because they're set from 0,0 and not their control point.
-				if (Do.X || NormVer != 0) { transform.X = pUProdTMB.Product(cNX).Product(tNBProdPV)[0,0]; } else { transform.X = ((float)SVMSize.X / ((float)LODedSVMSize.X - (float)1)) * (float)u; }
-				if (Do.Y || NormVer != 0) { transform.Y = pUProdTMB.Product(cNY).Product(tNBProdPV)[0,0]; } else { transform.Y = 0; }
-				if (Do.Z || NormVer != 0) { transform.Z = pUProdTMB.Product(cNZ).Product(tNBProdPV)[0,0]; } else { transform.Z = ((float)SVMSize.Y / ((float)LODedSVMSize.Y - (float)1)) * (float)v; }
+				transform.X = pUProdTMB.Product(cNX).Product(tNBProdPV)[0,0];
+				transform.Y = pUProdTMB.Product(cNY).Product(tNBProdPV)[0,0]; 
+				transform.Z = pUProdTMB.Product(cNZ).Product(tNBProdPV)[0,0];
 				
 				return transform;
 			}
