@@ -27,6 +27,8 @@ namespace BezierSurfaceBuilder
 		public List<List<ControlPoint>> ControlNetwork = new List<List<ControlPoint>>();
 		public List<List<Vector3>> ControlNetworkPositions = new List<List<Vector3>>();
 		
+		[Export]
+		public bool AutoUpdate = true; // Whether or not to continuously update the surfaces.
 		[ExportGroup("Do")]
 		
 		private BitVector3 Do = new BitVector3(true, true, true); // Determines whether or not we do the full Bezier transform calculation for a given direction, as it saves computing power and is equally accurate when the contol points are evenly spaced.
@@ -110,6 +112,14 @@ namespace BezierSurfaceBuilder
 				Print("Loading!");
 				Loaded = true;
 				LoadSurfaces();
+			}
+		}
+
+		public override void _Process(double delta)
+		{
+			if (AutoUpdate)
+			{
+				UpdateSurfaces();
 			}
 		}
 
