@@ -1,0 +1,3 @@
+This is a addon that adds bezier surface functionality to Godot. It is currently fully functional, but lacks a number of important features that make it, for now, not very useful. Feel free to give it a try and drop some feedback on the github page (https://github.com/MajesticMonkey/GodotBezierSurfaces).
+
+To use the addon, just add a BezierSurfaceBuilder to your 3d scene, click on the sphere, hit "add surface" in the inspector window, and away you go! Move the spheres to change the surface, and add more surfaces at control points as you wish.
