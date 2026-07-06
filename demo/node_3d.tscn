@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://bkges2iyxi8e8"]
+
+[node name="Node3D" type="Node3D" unique_id=1640998869]
+
+[node name="NURB" type="NURB" parent="." unique_id=1953570882]
