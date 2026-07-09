@@ -6,7 +6,6 @@ godot.x86_64
 
 export_presets.cfg
 
-godot-cpp/
 Plugin/
 
 .sconsign.dblite
