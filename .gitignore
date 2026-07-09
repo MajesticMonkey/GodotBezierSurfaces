@@ -1,0 +1,38 @@
+# --- NEVER Ignore These (Ensure they are explicitly kept) ---
+!*.gdextension
+!*.dll
+!*.so
+!*.dylib
+!*.a
+!*.framework/
+!*.xcframework/
+!*.wasm
+
+# --- C/C++ Build Artifacts & Intermediate Files ---
+**.tmp
+*.o
+*.os
+*.obj
+*.a
+*.lib
+*.pdb
+*.idb
+*.ilk
+*.exp
+*.map
+.sconsign.dblite
+SConstruct.local
+
+# --- IDEs & Tooling ---
+.vs/
+.vscode/
+.editorconfig
+*.user
+*.suo
+*.sln
+*.vcxproj
+*.filters
+
+# --- Godot Editor Local Metadata ---
+.godot/
+.import/
