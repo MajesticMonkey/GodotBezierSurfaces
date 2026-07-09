@@ -50,7 +50,7 @@ NURB::NURB(
     set_process_internal(true);
 
     VPS = 32;
-    CPMesh = memnew(SphereMesh);
+    CPMesh.instantiate();
 
     for(int i = 0; i < 4; i++) {
         CPNetwork[i] = Eigen::Matrix<float, 4, 4>::Zero();
@@ -310,7 +310,7 @@ void NURB::ReloadSurface(
     godot::UtilityFunctions::print("Reloading Surface");
     MeshData meshdata = std::async(std::launch::async, &NURB::IterateOverParametricPoints, this, CPNetwork, B, DB, VPS).get();
 
-    MeshShape = memnew(ArrayMesh);
+    MeshShape.instantiate();
 
     godot::Array surfacearray;
 
