@@ -14,6 +14,7 @@
 
 #include <godot_cpp/variant/packed_vector2_array.hpp>
 #include <godot_cpp/variant/packed_vector3_array.hpp>
+#include <godot_cpp/variant/packed_vector4_array.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/variant/vector2i.hpp>
 #include <godot_cpp/variant/vector2.hpp>
@@ -33,13 +34,19 @@ void NURB::_bind_methods(
 
 )
 {
+    ClassDB::bind_method(D_METHOD("SetSceneSaveNetwork", "CN"), &NURB::SetSceneSaveNetwork);
+    ClassDB::bind_method(D_METHOD("GetSceneSaveNetwork"), &NURB::GetSceneSaveNetwork);
+    //ClassDB::bind_method(D_METHOD("ReloadSurface"), &NURB::ReloadSurface);
 
+    ADD_PROPERTY(PropertyInfo(Variant::PACKED_VECTOR4_ARRAY, "SceneSaveNetwork"), "SetSceneSaveNetwork", "GetSceneSaveNetwork");
 }
 
 NURB::NURB(
 
 )
 {
+    CNMat->set_flag(godot::StandardMaterial3D::FLAG_DISABLE_DEPTH_TEST, true);
+
     set_process_internal(true);
 
     VPS = 32;
@@ -53,15 +60,6 @@ NURB::NURB(
     std::mt19937 gen(rd());
 
     std::uniform_real_distribution<float> dis(0.0f, (float)VPS);
-
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            CPNetwork[0](i, j) = (i / 3.0f) * (float)VPS;
-            CPNetwork[1](i, j) = 0;
-            CPNetwork[2](i, j) = (j / 3.0f) * (float)VPS;
-            CPNetwork[3](i, j) = 1.0f;
-        }
-    }
 }
 
 void NURB::_enter_tree (
@@ -73,7 +71,7 @@ void NURB::_enter_tree (
     }
 
     EditorInterface *ei = EditorInterface::get_singleton();
-    if (ei && ei->get_selection()) {
+    if (ei && ei->get_selection() && !ei->get_selection()->is_connected("selection_changed", callable_mp(this, &NURB::_selection_changed))) {
         ei->get_selection()->connect("selection_changed", callable_mp(this, &NURB::_selection_changed));
     }
 }
@@ -82,14 +80,36 @@ void NURB::_exit_tree (
 
 )
 {
-    if (!Engine::get_singleton()->is_editor_hint()) {
-        return;
+
+}
+
+void NURB::SetSceneSaveNetwork(
+    const PackedVector4Array &Network
+)
+{
+    SceneSaveNetwork = Network;
+}
+
+void NURB::UpdateSceneSaveNetwork(
+    std::array<Eigen::Matrix<float, 4, 4>, 4> CN
+)
+{
+    godot::PackedVector4Array SSNForklift = PackedVector4Array();
+    for (int i = 0; i < 16; i++)
+    {
+        Vector2i Crds = Vector2i(floor((float)i/4.0f), i % 4);
+        SSNForklift.append(Vector4(CN[0](Crds.x, Crds.y), CN[1](Crds.x, Crds.y), CN[2](Crds.x, Crds.y), CN[3](Crds.x, Crds.y)));
     }
 
-    EditorInterface *ei = EditorInterface::get_singleton();
-    if (ei && ei->get_selection()) {
-        this->disconnect("selection_changed", callable_mp(this, &NURB::_selection_changed));
-    }
+    SceneSaveNetwork = SSNForklift;
+}
+
+godot::PackedVector4Array NURB::GetSceneSaveNetwork(
+
+)
+const
+{
+    return SceneSaveNetwork;
 }
 
 void NURB::_selection_changed (
@@ -141,6 +161,30 @@ void NURB::_ready (
 
 )
 {
+    if (!SceneSaveNetwork.is_empty())
+    {
+        for (int i = 0; i < 16; i++) {
+            Vector2i Crd = Vector2i(floor((float)i / 4.0f), i % 4);
+            CPNetwork[0](Crd.x, Crd.y) = SceneSaveNetwork[i].x;
+            CPNetwork[1](Crd.x, Crd.y) = SceneSaveNetwork[i].y;
+            CPNetwork[2](Crd.x, Crd.y) = SceneSaveNetwork[i].z;
+            CPNetwork[3](Crd.x, Crd.y) = SceneSaveNetwork[i].w;
+        }
+    }
+    else
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                CPNetwork[0](i, j) = (i / 3.0f) * (float)VPS;
+                CPNetwork[1](i, j) = 0;
+                CPNetwork[2](i, j) = (j / 3.0f) * (float)VPS;
+                CPNetwork[3](i, j) = 1.0f;
+            }
+        }
+    }
+
     ReloadSurface();
     
     set_mesh(MeshShape);
@@ -246,6 +290,8 @@ godot::MeshInstance3D* NURB::CreateControlPoint(
 {
     godot::MeshInstance3D* ControlPoint = memnew(MeshInstance3D);
 
+    ControlPoint->set_material_override(CNMat);
+
     ControlPoint->set_mesh(CPMesh);
 
     ControlPoint->set_name(Prefix + String::num(UV.x, 0) + "_" + String::num(UV.y, 0));
@@ -259,6 +305,8 @@ void NURB::ReloadSurface(
 
 )
 {
+
+    UpdateSceneSaveNetwork(CPNetwork);
     godot::UtilityFunctions::print("Reloading Surface");
     MeshData meshdata = std::async(std::launch::async, &NURB::IterateOverParametricPoints, this, CPNetwork, B, DB, VPS).get();
 

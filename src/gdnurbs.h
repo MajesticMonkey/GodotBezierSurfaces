@@ -9,10 +9,12 @@
 #include <godot_cpp/classes/array_mesh.hpp>
 #include <godot_cpp/classes/mesh.hpp>
 #include <godot_cpp/classes/sphere_mesh.hpp>
+#include <godot_cpp/classes/standard_material3d.hpp>
 
 #include <godot_cpp/variant/array.hpp>
-#include <godot_cpp/variant/packed_vector3_array.hpp>
 #include <godot_cpp/variant/packed_vector2_array.hpp>
+#include <godot_cpp/variant/packed_vector3_array.hpp>
+#include <godot_cpp/variant/packed_vector4_array.hpp>
 #include <godot_cpp/variant/vector2i.hpp>
 #include <godot_cpp/variant/vector2.hpp>
 #include <godot_cpp/variant/vector3.hpp>
@@ -47,6 +49,8 @@ namespace godot {
         GDCLASS(NURB, AbstractNURB);
 
         private:
+            godot::Ref<godot::StandardMaterial3D> CNMat = memnew(StandardMaterial3D);
+            godot::PackedVector4Array SceneSaveNetwork;
             std::array<Eigen::Matrix<float, 4, 4>, 4> CPNetwork; // X, Y, Z, Weight
             std::array<godot::MeshInstance3D*, 16> CPStorage;
             inline static const Eigen::Matrix<float, 4, 4> B{
@@ -127,6 +131,10 @@ namespace godot {
             void _process(double delta) override;
 
             void _selection_changed();
+
+            void UpdateSceneSaveNetwork(std::array<Eigen::Matrix<float, 4, 4>, 4> CN);
+            void SetSceneSaveNetwork(const PackedVector4Array &Network);
+            godot::PackedVector4Array GetSceneSaveNetwork() const;
 
             NURB();
             ~NURB();
