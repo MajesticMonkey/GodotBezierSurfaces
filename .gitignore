@@ -4,6 +4,8 @@ godot.x86_64
 .import/
 *.translation
 
+build_all.py
+
 export_presets.cfg
 
 Plugin/

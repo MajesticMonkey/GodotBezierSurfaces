@@ -5,6 +5,7 @@
 
 #include <godot_cpp/core/math.hpp>
 
+#include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/array_mesh.hpp>
 #include <godot_cpp/classes/mesh.hpp>
@@ -29,10 +30,14 @@
 
 namespace godot {
     class AbstractNURB : public MeshInstance3D {
+        
+
         private:
+            
             
         
         protected:
+            
             Ref<godot::ArrayMesh> MeshShape;
             Ref<godot::SphereMesh> CPMesh;
             int VPS; // Verticies Per Side
@@ -40,8 +45,12 @@ namespace godot {
             bool ChildrenEnabled = false;
             godot::String Prefix = "ControlPoint_";
 
+            static void _bind_abstract_methods();
+
         public:
             bool AutoUpdate = true;
+
+            
             
     };
 
@@ -49,6 +58,7 @@ namespace godot {
         GDCLASS(NURB, AbstractNURB);
 
         private:
+            Ref<godot::Material> SurfaceMat;
             godot::Ref<godot::StandardMaterial3D> CNMat = memnew(StandardMaterial3D);
             godot::PackedVector4Array SceneSaveNetwork;
             std::array<Eigen::Matrix<float, 4, 4>, 4> CPNetwork; // X, Y, Z, Weight
@@ -135,6 +145,9 @@ namespace godot {
             void UpdateSceneSaveNetwork(std::array<Eigen::Matrix<float, 4, 4>, 4> CN);
             void SetSceneSaveNetwork(const PackedVector4Array &Network);
             godot::PackedVector4Array GetSceneSaveNetwork() const;
+
+            void SetSurfaceMat(const Ref<Material> &M);
+            Ref<Material> GetSurfaceMat() const;
 
             NURB();
             ~NURB();

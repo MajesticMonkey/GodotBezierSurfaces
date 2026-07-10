@@ -6,6 +6,7 @@
 #include <godot_cpp/classes/editor_interface.hpp>
 #include <godot_cpp/classes/editor_selection.hpp>
 #include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/classes/mesh.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/resource_saver.hpp>
@@ -30,10 +31,29 @@
 
 using namespace godot;
 
-void NURB::_bind_methods(
+void AbstractNURB::_bind_abstract_methods (
 
 )
 {
+    //ClassDB::bind_method(D_METHOD("SetSurfaceMat", "Mat"), &AbstractNURB::SetSurfaceMat);
+    //ClassDB::bind_method(D_METHOD("GetSurfaceMat"), &AbstractNURB::GetSurfaceMat);
+
+    //ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "SurfaceMat", PROPERTY_HINT_RESOURCE_TYPE, "Material"), "SetSurfaceMat", "GetSurfaceMat");
+}
+
+void NURB::SetSurfaceMat ( const Ref<Material> &Mat ) { SurfaceMat = Mat; }
+
+Ref<Material> NURB::GetSurfaceMat ( ) const { return SurfaceMat; }
+
+void NURB::_bind_methods (
+
+)
+{
+    ClassDB::bind_method(D_METHOD("SetSurfaceMat", "Mat"), &NURB::SetSurfaceMat);
+    ClassDB::bind_method(D_METHOD("GetSurfaceMat"), &NURB::GetSurfaceMat);
+
+    ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "SurfaceMat", PROPERTY_HINT_RESOURCE_TYPE, "Material"), "SetSurfaceMat", "GetSurfaceMat");
+    _bind_abstract_methods();
     ClassDB::bind_method(D_METHOD("SetSceneSaveNetwork", "CN"), &NURB::SetSceneSaveNetwork);
     ClassDB::bind_method(D_METHOD("GetSceneSaveNetwork"), &NURB::GetSceneSaveNetwork);
     //ClassDB::bind_method(D_METHOD("ReloadSurface"), &NURB::ReloadSurface);
@@ -41,7 +61,11 @@ void NURB::_bind_methods(
     ADD_PROPERTY(PropertyInfo(Variant::PACKED_VECTOR4_ARRAY, "SceneSaveNetwork"), "SetSceneSaveNetwork", "GetSceneSaveNetwork");
 }
 
-NURB::NURB(
+void NURB::SetSceneSaveNetwork( const PackedVector4Array &Network ) { SceneSaveNetwork = Network; }
+
+godot::PackedVector4Array NURB::GetSceneSaveNetwork( ) const { return SceneSaveNetwork; }
+
+NURB::NURB (
 
 )
 {
@@ -83,13 +107,6 @@ void NURB::_exit_tree (
 
 }
 
-void NURB::SetSceneSaveNetwork(
-    const PackedVector4Array &Network
-)
-{
-    SceneSaveNetwork = Network;
-}
-
 void NURB::UpdateSceneSaveNetwork(
     std::array<Eigen::Matrix<float, 4, 4>, 4> CN
 )
@@ -104,13 +121,7 @@ void NURB::UpdateSceneSaveNetwork(
     SceneSaveNetwork = SSNForklift;
 }
 
-godot::PackedVector4Array NURB::GetSceneSaveNetwork(
 
-)
-const
-{
-    return SceneSaveNetwork;
-}
 
 void NURB::_selection_changed (
 
@@ -222,6 +233,8 @@ void NURB::_process (
             ReloadSurface();
 
             set_mesh(MeshShape);
+
+            set_material_override(SurfaceMat);
         }
     }  
 }
@@ -315,7 +328,7 @@ void NURB::ReloadSurface(
     godot::Array surfacearray;
 
     surfacearray.resize(Mesh::ARRAY_MAX);
-    
+
 
     surfacearray[Mesh::ARRAY_TEX_UV] = godot::Variant(WindTriangles<Vector2>(meshdata.uvs, VPS)); // UVs
     surfacearray[Mesh::ARRAY_VERTEX] = godot::Variant(WindTriangles<Vector3>(meshdata.positions, VPS)); // Transforms

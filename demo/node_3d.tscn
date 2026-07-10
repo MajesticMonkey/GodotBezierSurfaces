@@ -1,6 +1,12 @@
 [gd_scene format=4 uid="uid://bkges2iyxi8e8"]
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_g43n6"]
+albedo_color = Color(0, 1, 1, 1)
+
 [node name="Node3D" type="Node3D" unique_id=189598634]
 
-[node name="NURB" type="NURB" parent="." unique_id=961552918]
-SceneSaveNetwork = PackedVector4Array(0, 0, 0, 1, 0, 0, 10.666667, 1, 0, 0, 21.333334, 1, 0, 0, 32, 1, 10.666667, -3.4612079, 0, 1, 10.666667, -4.320353, 10.666667, 1, 10.666667, 0, 21.333334, 1, 10.666667, 0, 32, 1, 21.333334, 0, 0, 1, 21.333334, 0, 10.666667, 1, 21.333334, 0, 21.333334, 1, 21.333334, 0, 32, 1, 32, 0, 0, 1, 32, 0, 10.666667, 1, 32, 0, 21.333334, 1, 32, 0, 32, 1)
+[node name="NURB2" type="NURB" parent="." unique_id=1181595718]
+SurfaceMat = SubResource("StandardMaterial3D_g43n6")
+SceneSaveNetwork = PackedVector4Array(0, 0, 0, 1, 0, 0, 10.666667, 1, 0, 0, 21.333334, 1, 0, 0, 32, 1, 10.666667, 0, 0, 1, 10.666667, -16.156422, 10.666667, 1, 10.666667, 0, 21.333334, 1, 10.666667, 0, 32, 1, 21.333334, 0, 0, 1, 21.333334, -34.65975, 10.666667, 1, 21.333334, 0, 21.333334, 1, 21.333334, 0, 32, 1, 32, 0, 0, 1, 32, 0, 10.666667, 1, 32, 0, 21.333334, 1, 32, -10.865119, 32, 1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.200178, 0)
+material_override = SubResource("StandardMaterial3D_g43n6")

@@ -41,4 +41,6 @@ else:
         source=sources,
     )
 
-Default(library)
+release = env.Install("Plugin/addons/nurbs/bin", library)
+
+Default([library, release])
