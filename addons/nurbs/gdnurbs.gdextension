@@ -6,15 +6,7 @@ reloadable = true
 
 [libraries]
 
-windows.debug.x86_64 = "res://bin/libgdnurbs.windows.template_debug.x86_64.dll"
-windows.release.x86_64 = "res://bin/libgdnurbs.windows.template_release.x86_64.dll"
-linux.debug.x86_64 = "res://bin/libgdnurbs.linux.template_debug.x86_64.so"
-linux.release.x86_64 = "res://bin/libgdnurbs.linux.template_release.x86_64.so"
-
-[dependencies]
-ios.debug = {
-    "res://bin/libgodot-cpp.ios.template_debug.xcframework": ""
-}
-ios.release = {
-    "res://bin/libgodot-cpp.ios.template_release.xcframework": ""
-}
+windows.debug.x86_64 = "res://addons/nurbs/bin/libgdnurbs.windows.template_debug.x86_64.dll"
+windows.release.x86_64 = "res://addons/nurbs/bin/libgdnurbs.windows.template_release.x86_64.dll"
+linux.debug.x86_64 = "res://addons/nurbs/bin/libgdnurbs.linux.template_debug.x86_64.so"
+linux.release.x86_64 = "res://addons/nurbs/bin/libgdnurbs.linux.template_release.x86_64.so"
