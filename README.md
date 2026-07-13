@@ -1,0 +1,3 @@
+This is a addon that adds Bezier Surface and NURB functionality to Godot. It is currently fully functional, and has all the features nessecary to be useful, although plenty more are on the way. Feel free to give it a try and drop some feedback on the github page (https://github.com/MajesticMonkey/GodotNURBs).
+
+To use the addon, just add a NURB To your scene.
