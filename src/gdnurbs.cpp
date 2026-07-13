@@ -3,6 +3,8 @@
 #include <godot_cpp/core/class_db.hpp>
 
 #include <godot_cpp/classes/array_mesh.hpp>
+#include <godot_cpp/classes/collision_shape3d.hpp>
+#include <godot_cpp/classes/concave_polygon_shape3d.hpp>
 #include <godot_cpp/classes/editor_interface.hpp>
 #include <godot_cpp/classes/editor_selection.hpp>
 #include <godot_cpp/classes/engine.hpp>
@@ -41,29 +43,56 @@ void AbstractNURB::_bind_abstract_methods (
     //ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "SurfaceMat", PROPERTY_HINT_RESOURCE_TYPE, "Material"), "SetSurfaceMat", "GetSurfaceMat");
 }
 
-void NURB::SetSurfaceMat ( const Ref<Material> &Mat ) { SurfaceMat = Mat; }
 
-Ref<Material> NURB::GetSurfaceMat ( ) const { return SurfaceMat; }
 
 void NURB::_bind_methods (
 
 )
 {
-    ClassDB::bind_method(D_METHOD("SetSurfaceMat", "Mat"), &NURB::SetSurfaceMat);
-    ClassDB::bind_method(D_METHOD("GetSurfaceMat"), &NURB::GetSurfaceMat);
-
-    ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "SurfaceMat", PROPERTY_HINT_RESOURCE_TYPE, "Material"), "SetSurfaceMat", "GetSurfaceMat");
-    _bind_abstract_methods();
+    /* Code to add attaching surfaces later.
     ClassDB::bind_method(D_METHOD("SetSceneSaveNetwork", "CN"), &NURB::SetSceneSaveNetwork);
     ClassDB::bind_method(D_METHOD("GetSceneSaveNetwork"), &NURB::GetSceneSaveNetwork);
-    //ClassDB::bind_method(D_METHOD("ReloadSurface"), &NURB::ReloadSurface);
 
     ADD_PROPERTY(PropertyInfo(Variant::PACKED_VECTOR4_ARRAY, "SceneSaveNetwork"), "SetSceneSaveNetwork", "GetSceneSaveNetwork");
+
+    ClassDB::bind_method(D_METHOD("SetXPPath", "N"), &NURB::SetXPPath);
+    ClassDB::bind_method(D_METHOD("GetXPPath"), &NURB::GetXPPath);
+
+    ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "XPPath", PROPERTY_HINT_NODE_TYPE), "SetXPPath", "GetXPPath");
+
+    ClassDB::bind_method(D_METHOD("SetXNPath", "N"), &NURB::SetXNPath);
+    ClassDB::bind_method(D_METHOD("GetXNPath"), &NURB::GetXNPath);
+
+    ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "XNPath", PROPERTY_HINT_NODE_TYPE), "SetXNPath", "GetXNPath");
+
+    ClassDB::bind_method(D_METHOD("SetZPPath", "N"), &NURB::SetZPPath);
+    ClassDB::bind_method(D_METHOD("GetZPPath"), &NURB::GetZPPath);
+
+    ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "ZPPath", PROPERTY_HINT_NODE_TYPE), "SetZPPath", "GetZPPath");
+
+    ClassDB::bind_method(D_METHOD("SetZNPath", "N"), &NURB::SetZNPath);
+    ClassDB::bind_method(D_METHOD("GetZNPath"), &NURB::GetZNPath);
+
+    ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "ZNPath", PROPERTY_HINT_NODE_TYPE), "SetZNPath", "GetZNPath");
+    */
 }
 
-void NURB::SetSceneSaveNetwork( const PackedVector4Array &Network ) { SceneSaveNetwork = Network; }
+void NURB::SetSceneSaveNetwork ( const PackedVector4Array &Network ) { SceneSaveNetwork = Network; }
+godot::PackedVector4Array NURB::GetSceneSaveNetwork ( ) const { return SceneSaveNetwork; }
 
-godot::PackedVector4Array NURB::GetSceneSaveNetwork( ) const { return SceneSaveNetwork; }
+void NURB::SetXPPath ( const godot::NodePath &N) { XPPath = N; }
+godot::NodePath NURB::GetXPPath ( ) const { return XPPath; }
+
+void NURB::SetXNPath ( const godot::NodePath &N) { XNPath = N; }
+godot::NodePath NURB::GetXNPath ( ) const { return XNPath; }
+
+void NURB::SetZPPath ( const godot::NodePath &N) { ZPPath = N; }
+godot::NodePath NURB::GetZPPath ( ) const { return ZPPath; }
+
+void NURB::SetZNPath ( const godot::NodePath &N) { ZNPath = N; }
+godot::NodePath NURB::GetZNPath ( ) const { return ZNPath; }
+
+
 
 NURB::NURB (
 
@@ -107,6 +136,24 @@ void NURB::_exit_tree (
 
 }
 
+void NURB::_notification (
+    int what
+)
+{
+    switch (what) {
+        NOTIFICATION_EDITOR_PRE_SAVE:
+			if (ChildrenEnabled) {
+                DisableChildren();
+            }
+            break;
+		NOTIFICATION_EDITOR_POST_SAVE:
+			if (!ChildrenEnabled) {
+                EnableChildren();
+            }
+            break;
+    }
+}
+
 void NURB::UpdateSceneSaveNetwork(
     std::array<Eigen::Matrix<float, 4, 4>, 4> CN
 )
@@ -133,12 +180,12 @@ void NURB::_selection_changed (
     TypedArray<Node> selection = ei->get_selection()->get_selected_nodes();
     Selected = false;
     if (selection.size() > 0) {
-        for (int i = 0; i < selection.size(); i++) {
+        for (int i = 0; i < selection.size() and !Selected; i++) {
             if (Object::cast_to<Node>(selection[i])->get_instance_id() == get_instance_id()) {
                 EnableChildren();
                 Selected = true;
             }
-            for (int j = 0; j < 16; j++) {
+            for (int j = 0; j < 16 and !Selected; j++) {
                 if (Object::cast_to<Node>(selection[i])->get_instance_id() == CPStorage[j]->get_instance_id()) {
                     EnableChildren();
                     Selected = true;
@@ -149,23 +196,22 @@ void NURB::_selection_changed (
             DisableChildren();
         }
     }
-    else
+    else if (ChildrenEnabled)
     {
         DisableChildren();
     }
 }
 
-bool NURB::_validate_property(
+void NURB::_validate_property(
     godot::PropertyInfo &p_property
 ) const
 {
-    if (p_property.name == godot::StringName("mesh")) {
-        p_property.usage = godot::PROPERTY_USAGE_EDITOR;
-
-        return true;
+    if (p_property.name == godot::StringName("mesh")
+    or p_property.name == godot::StringName("skeleton")
+    or p_property.name == godot::StringName("skin")
+    or p_property.name == godot::StringName("SceneSaveNetwork")) {
+        p_property.usage &= ~godot::PROPERTY_USAGE_EDITOR;
     }
-
-    return false;
 }
 
 void NURB::_ready (
@@ -197,10 +243,12 @@ void NURB::_ready (
     }
 
     ReloadSurface();
-    
-    set_mesh(MeshShape);
 
     CreateChildren();
+
+    add_child(StaticBody);
+
+    StaticBody->add_child(CollisionShape);
 }
 
 void NURB::_process (
@@ -232,11 +280,9 @@ void NURB::_process (
         {
             ReloadSurface();
 
-            set_mesh(MeshShape);
-
             set_material_override(SurfaceMat);
         }
-    }  
+    }
 }
 
 NURB::~NURB(
@@ -335,6 +381,12 @@ void NURB::ReloadSurface(
     surfacearray[Mesh::ARRAY_NORMAL] = godot::Variant(WindTriangles<Vector3>(meshdata.normals, VPS)); // Normals
 
     MeshShape->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, surfacearray);
+
+    set_mesh(MeshShape);
+    
+    godot::Ref<ConcavePolygonShape3D> ConcaveShape = MeshShape->create_trimesh_shape();
+    
+    CollisionShape->set_shape(ConcaveShape);
 }
 
 template <typename T>

@@ -5,12 +5,14 @@
 
 #include <godot_cpp/core/math.hpp>
 
+#include <godot_cpp/classes/collision_shape3d.hpp>
 #include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/array_mesh.hpp>
 #include <godot_cpp/classes/mesh.hpp>
 #include <godot_cpp/classes/sphere_mesh.hpp>
 #include <godot_cpp/classes/standard_material3d.hpp>
+#include <godot_cpp/classes/static_body3d.hpp>
 
 #include <godot_cpp/variant/array.hpp>
 #include <godot_cpp/variant/packed_vector2_array.hpp>
@@ -39,6 +41,7 @@ namespace godot {
         protected:
             
             Ref<godot::ArrayMesh> MeshShape;
+            Ref<godot::ConcavePolygonShape3D> MeshCollider;
             Ref<godot::SphereMesh> CPMesh;
             int VPS; // Verticies Per Side
             bool Selected = false;
@@ -58,6 +61,16 @@ namespace godot {
         GDCLASS(NURB, AbstractNURB);
 
         private:
+            godot::NodePath XPPath;
+            godot::NodePath XNPath;
+            godot::NodePath ZPPath;
+            godot::NodePath ZNPath;
+            godot::NURB* XPNeighbor;
+            godot::NURB* XNNeighbor;
+            godot::NURB* ZPNeighbor;
+            godot::NURB* ZNNeighbor;
+            godot::StaticBody3D* StaticBody = memnew(StaticBody3D);
+            godot::CollisionShape3D* CollisionShape = memnew(CollisionShape3D);
             Ref<godot::Material> SurfaceMat;
             godot::Ref<godot::StandardMaterial3D> CNMat = memnew(StandardMaterial3D);
             godot::PackedVector4Array SceneSaveNetwork;
@@ -130,7 +143,7 @@ namespace godot {
         protected:
             static void _bind_methods();
             
-            bool _validate_property(
+            void _validate_property(
                 godot::PropertyInfo &p_property
             ) const;
 
@@ -139,36 +152,33 @@ namespace godot {
             void _exit_tree() override;
             void _ready() override;
             void _process(double delta) override;
+            void _notification(int p_what);
 
             void _selection_changed();
+
+
 
             void UpdateSceneSaveNetwork(std::array<Eigen::Matrix<float, 4, 4>, 4> CN);
             void SetSceneSaveNetwork(const PackedVector4Array &Network);
             godot::PackedVector4Array GetSceneSaveNetwork() const;
 
-            void SetSurfaceMat(const Ref<Material> &M);
-            Ref<Material> GetSurfaceMat() const;
+            void SetXPPath(const godot::NodePath &N);
+            godot::NodePath GetXPPath() const;
+
+            void SetXNPath(const godot::NodePath &N);
+            godot::NodePath GetXNPath() const;
+
+            void SetZPPath(const godot::NodePath &N);
+            godot::NodePath GetZPPath() const;
+
+            void SetZNPath(const godot::NodePath &N);
+            godot::NodePath GetZNPath() const;
+
+            void ConnectPath();
 
             NURB();
             ~NURB();
         
-    };
-
-    class DynamicNURB : public AbstractNURB {
-        GDCLASS(DynamicNURB, AbstractNURB);
-
-        private:
-            Vector2i CNSize;
-            std::vector<std::array<float, 4>> CPNetwork[4]; // X, Y, Z, Weight
-            std::vector<float> MB;
-            std::vector<float> NB;
-
-        protected:
-            static void _bind_methods();
-
-        public:
-            DynamicNURB();
-            ~DynamicNURB();
     };
 }
 
