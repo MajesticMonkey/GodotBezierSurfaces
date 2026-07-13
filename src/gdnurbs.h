@@ -1,6 +1,8 @@
 #ifndef GDNURBS_H
 #define GDNURBS_H
 
+#include "controlpoint.h"
+
 #include <vector>
 
 #include <godot_cpp/core/math.hpp>
@@ -75,7 +77,7 @@ namespace godot {
             godot::Ref<godot::StandardMaterial3D> CNMat = memnew(StandardMaterial3D);
             godot::PackedVector4Array SceneSaveNetwork;
             std::array<Eigen::Matrix<float, 4, 4>, 4> CPNetwork; // X, Y, Z, Weight
-            std::array<godot::MeshInstance3D*, 16> CPStorage;
+            std::array<godot::ControlPoint*, 16> CPStorage;
             inline static const Eigen::Matrix<float, 4, 4> B{
                 {1, -3, 3, -1},
                 {0, 3, -6, 3},
@@ -101,7 +103,7 @@ namespace godot {
 
             );
 
-            godot::MeshInstance3D* CreateControlPoint(
+            godot::ControlPoint* CreateControlPoint(
                 Vector2i UV
             );
 

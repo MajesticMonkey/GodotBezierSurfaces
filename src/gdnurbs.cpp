@@ -1,4 +1,5 @@
 #include "gdnurbs.h"
+#include "controlpoint.h"
 
 #include <godot_cpp/core/class_db.hpp>
 
@@ -154,7 +155,7 @@ void NURB::_notification (
     }
 }
 
-void NURB::UpdateSceneSaveNetwork(
+void NURB::UpdateSceneSaveNetwork (
     std::array<Eigen::Matrix<float, 4, 4>, 4> CN
 )
 {
@@ -262,17 +263,19 @@ void NURB::_process (
         {
             for (int j = 0; j < 4; j++)
             {
-                MeshInstance3D* ControlPoint = CPStorage[i * 4 + j];
+                ControlPoint* ControlPointI = CPStorage[i * 4 + j];
                 if (
-                    CPNetwork[0](i, j) != ControlPoint->get_position().x ||
-                    CPNetwork[1](i, j) != ControlPoint->get_position().y ||
-                    CPNetwork[2](i, j) != ControlPoint->get_position().z
+                    CPNetwork[0](i, j) != ControlPointI->get_position().x ||
+                    CPNetwork[1](i, j) != ControlPointI->get_position().y ||
+                    CPNetwork[2](i, j) != ControlPointI->get_position().z ||
+                    CPNetwork[3](i, j) != ControlPointI->GetWeight()
                 ) // Replace 0 with the actual value you want to check
                 {
                     changed = true;
-                    CPNetwork[0](i, j) = ControlPoint->get_position().x;
-                    CPNetwork[1](i, j) = ControlPoint->get_position().y;
-                    CPNetwork[2](i, j) = ControlPoint->get_position().z;
+                    CPNetwork[0](i, j) = ControlPointI->get_position().x;
+                    CPNetwork[1](i, j) = ControlPointI->get_position().y;
+                    CPNetwork[2](i, j) = ControlPointI->get_position().z;
+                    CPNetwork[3](i, j) = ControlPointI->GetWeight();
                 }
             }
         }
@@ -343,21 +346,21 @@ void NURB::CreateChildren(
     }
 }
 
-godot::MeshInstance3D* NURB::CreateControlPoint(
+godot::ControlPoint* NURB::CreateControlPoint(
     Vector2i UV
 )
 {
-    godot::MeshInstance3D* ControlPoint = memnew(MeshInstance3D);
+    godot::ControlPoint* ControlPointI = memnew(godot::ControlPoint);
 
-    ControlPoint->set_material_override(CNMat);
+    ControlPointI->set_material_override(CNMat);
 
-    ControlPoint->set_mesh(CPMesh);
+    ControlPointI->set_mesh(CPMesh);
 
-    ControlPoint->set_name(Prefix + String::num(UV.x, 0) + "_" + String::num(UV.y, 0));
+    ControlPointI->set_name(Prefix + String::num(UV.x, 0) + "_" + String::num(UV.y, 0));
 
-    ControlPoint->set_position(Vector3(CPNetwork[0](UV.x, UV.y), CPNetwork[1](UV.x, UV.y), CPNetwork[2](UV.x, UV.y)));
+    ControlPointI->set_position(Vector3(CPNetwork[0](UV.x, UV.y), CPNetwork[1](UV.x, UV.y), CPNetwork[2](UV.x, UV.y)));
 
-    return ControlPoint;
+    return ControlPointI;
 }
 
 void NURB::ReloadSurface(

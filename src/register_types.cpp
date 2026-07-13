@@ -1,6 +1,7 @@
 #include "register_types.h"
 
 #include "gdnurbs.h"
+#include "controlpoint.h"
 
 #include <gdextension_interface.h>
 #include <godot_cpp/core/defs.hpp>
@@ -15,6 +16,7 @@ void initialize_nurbs_module(ModuleInitializationLevel p_level) {
 	}
 
 	GDREGISTER_CLASS(NURB);
+	GDREGISTER_ABSTRACT_CLASS(ControlPoint);
 }
 
 
