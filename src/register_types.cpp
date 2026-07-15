@@ -15,7 +15,7 @@ void initialize_nurbs_module(ModuleInitializationLevel p_level) {
 	}
 
 	GDREGISTER_CLASS(NURB);
-	GDREGISTER_CLASS(ControlPoint);
+	GDREGISTER_INTERNAL_CLASS(ControlPoint);
 }
 
 

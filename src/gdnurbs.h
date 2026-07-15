@@ -45,6 +45,7 @@ namespace godot {
             int VPS = 32; // Verticies Per Side
             bool Selected = false;
             bool ChildrenEnabled = false;
+            bool Collision = true;
             godot::String Prefix = "ControlPoint_";
 
         public:
