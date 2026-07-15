@@ -3,8 +3,6 @@
 
 #include "controlpoint.h"
 
-#include <vector>
-
 #include <godot_cpp/core/math.hpp>
 
 #include <godot_cpp/classes/collision_shape3d.hpp>
@@ -25,7 +23,6 @@
 #include <godot_cpp/variant/vector3.hpp>
 
 
-#include <vector>
 #include <Eigen/Dense>
 
 
@@ -45,12 +42,10 @@ namespace godot {
             Ref<godot::ArrayMesh> MeshShape;
             Ref<godot::ConcavePolygonShape3D> MeshCollider;
             Ref<godot::SphereMesh> CPMesh;
-            int VPS; // Verticies Per Side
+            int VPS = 32; // Verticies Per Side
             bool Selected = false;
             bool ChildrenEnabled = false;
             godot::String Prefix = "ControlPoint_";
-
-            static void _bind_abstract_methods();
 
         public:
             bool AutoUpdate = true;
@@ -91,6 +86,12 @@ namespace godot {
                 {0, 0, 3, 0}
             };
             
+            
+
+            void CreateChildren(
+
+            );
+
             void EnableChildren(
                 
             );
@@ -99,7 +100,11 @@ namespace godot {
                 
             );
 
-            void CreateChildren(
+            void HideChildrenFromSaving (
+
+            );
+
+            void UnhideChildrenFromSaving (
 
             );
 

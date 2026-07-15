@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/math.hpp>
 
 #include <godot_cpp/classes/collision_shape3d.hpp>
@@ -11,12 +12,6 @@
 
 #include <godot_cpp/variant/array.hpp>
 #include <godot_cpp/variant/vector2i.hpp>
-
-
-#include <vector>
-
-
-
 
 
 

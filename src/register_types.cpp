@@ -9,14 +9,13 @@
 
 using namespace godot;
 
-
 void initialize_nurbs_module(ModuleInitializationLevel p_level) {
 	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
 		return;
 	}
 
 	GDREGISTER_CLASS(NURB);
-	GDREGISTER_ABSTRACT_CLASS(ControlPoint);
+	GDREGISTER_CLASS(ControlPoint);
 }
 
 

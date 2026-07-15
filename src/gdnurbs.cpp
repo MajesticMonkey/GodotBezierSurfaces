@@ -28,70 +28,22 @@
 #include <cmath>
 #include <Eigen/Dense>
 #include <future>
-#include <random>
-#include <vector>
 
 
 using namespace godot;
-
-void AbstractNURB::_bind_abstract_methods (
-
-)
-{
-    //ClassDB::bind_method(D_METHOD("SetSurfaceMat", "Mat"), &AbstractNURB::SetSurfaceMat);
-    //ClassDB::bind_method(D_METHOD("GetSurfaceMat"), &AbstractNURB::GetSurfaceMat);
-
-    //ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "SurfaceMat", PROPERTY_HINT_RESOURCE_TYPE, "Material"), "SetSurfaceMat", "GetSurfaceMat");
-}
-
-
 
 void NURB::_bind_methods (
 
 )
 {
-    /* Code to add attaching surfaces later.
     ClassDB::bind_method(D_METHOD("SetSceneSaveNetwork", "CN"), &NURB::SetSceneSaveNetwork);
     ClassDB::bind_method(D_METHOD("GetSceneSaveNetwork"), &NURB::GetSceneSaveNetwork);
 
     ADD_PROPERTY(PropertyInfo(Variant::PACKED_VECTOR4_ARRAY, "SceneSaveNetwork"), "SetSceneSaveNetwork", "GetSceneSaveNetwork");
-
-    ClassDB::bind_method(D_METHOD("SetXPPath", "N"), &NURB::SetXPPath);
-    ClassDB::bind_method(D_METHOD("GetXPPath"), &NURB::GetXPPath);
-
-    ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "XPPath", PROPERTY_HINT_NODE_TYPE), "SetXPPath", "GetXPPath");
-
-    ClassDB::bind_method(D_METHOD("SetXNPath", "N"), &NURB::SetXNPath);
-    ClassDB::bind_method(D_METHOD("GetXNPath"), &NURB::GetXNPath);
-
-    ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "XNPath", PROPERTY_HINT_NODE_TYPE), "SetXNPath", "GetXNPath");
-
-    ClassDB::bind_method(D_METHOD("SetZPPath", "N"), &NURB::SetZPPath);
-    ClassDB::bind_method(D_METHOD("GetZPPath"), &NURB::GetZPPath);
-
-    ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "ZPPath", PROPERTY_HINT_NODE_TYPE), "SetZPPath", "GetZPPath");
-
-    ClassDB::bind_method(D_METHOD("SetZNPath", "N"), &NURB::SetZNPath);
-    ClassDB::bind_method(D_METHOD("GetZNPath"), &NURB::GetZNPath);
-
-    ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "ZNPath", PROPERTY_HINT_NODE_TYPE), "SetZNPath", "GetZNPath");
-    */
 }
 
 void NURB::SetSceneSaveNetwork ( const PackedVector4Array &Network ) { SceneSaveNetwork = Network; }
 godot::PackedVector4Array NURB::GetSceneSaveNetwork ( ) const { return SceneSaveNetwork; }
-
-void NURB::SetXPPath ( const godot::NodePath &N) { XPPath = N; }
-godot::NodePath NURB::GetXPPath ( ) const { return XPPath; }
-
-void NURB::SetXNPath ( const godot::NodePath &N) { XNPath = N; }
-godot::NodePath NURB::GetXNPath ( ) const { return XNPath; }
-
-void NURB::SetZPPath ( const godot::NodePath &N) { ZPPath = N; }
-godot::NodePath NURB::GetZPPath ( ) const { return ZPPath; }
-
-void NURB::SetZNPath ( const godot::NodePath &N) { ZNPath = N; }
-godot::NodePath NURB::GetZNPath ( ) const { return ZNPath; }
 
 
 
@@ -103,17 +55,11 @@ NURB::NURB (
 
     set_process_internal(true);
 
-    VPS = 32;
     CPMesh.instantiate();
 
     for(int i = 0; i < 4; i++) {
         CPNetwork[i] = Eigen::Matrix<float, 4, 4>::Zero();
     }
-
-    std::random_device rd;
-    std::mt19937 gen(rd());
-
-    std::uniform_real_distribution<float> dis(0.0f, (float)VPS);
 }
 
 void NURB::_enter_tree (
@@ -141,15 +87,13 @@ void NURB::_notification (
     int what
 )
 {
-    switch (what) {
-        NOTIFICATION_EDITOR_PRE_SAVE:
-			if (ChildrenEnabled) {
-                DisableChildren();
-            }
+    switch ( what ) {
+        case NOTIFICATION_EDITOR_PRE_SAVE:
+            HideChildrenFromSaving();
             break;
-		NOTIFICATION_EDITOR_POST_SAVE:
-			if (!ChildrenEnabled) {
-                EnableChildren();
+	    case NOTIFICATION_EDITOR_POST_SAVE:
+            if ( Selected ) {
+                UnhideChildrenFromSaving();
             }
             break;
     }
@@ -301,7 +245,7 @@ NURB::~NURB(
 
 }
 
-void NURB::EnableChildren(
+void NURB::EnableChildren (
 
 )
 {
@@ -314,7 +258,9 @@ void NURB::EnableChildren(
     }
 }
 
-void NURB::DisableChildren(
+
+
+void NURB::DisableChildren (
 
 )
 {
@@ -326,7 +272,29 @@ void NURB::DisableChildren(
     }
 }
 
-void NURB::CreateChildren(
+void NURB::HideChildrenFromSaving (
+
+)
+{
+    if (ChildrenEnabled) {
+        for(int i = 0; i < 16; i++){
+            CPStorage[i]->set_owner(nullptr);
+        }
+    }
+}
+
+void NURB::UnhideChildrenFromSaving (
+
+)
+{
+    if (ChildrenEnabled) {
+        for(int i = 0; i < 16; i++){
+            CPStorage[i]->set_owner(get_tree()->get_edited_scene_root());
+        }
+    }
+}
+
+void NURB::CreateChildren (
 
 )
 {
@@ -377,7 +345,7 @@ void NURB::ReloadSurface(
 {
 
     UpdateSceneSaveNetwork(CPNetwork);
-    godot::UtilityFunctions::print("Reloading Surface");
+    
     MeshData meshdata = std::async(std::launch::async, &NURB::IterateOverParametricPoints, this, CPNetwork, B, DB, VPS).get();
 
     MeshShape.instantiate();
@@ -468,7 +436,7 @@ NURB::MeshData NURB::IterateOverParametricPoints(
     return PositionsAndNormals;
 }
 
-Vector4 NURB::ComputeParametricPoint(
+Vector4 NURB::ComputeParametricPoint (
     float u,
     float v,
     std::array<Eigen::Matrix<float, 4, 4, 0, 4, 4>, 4> CNW,
