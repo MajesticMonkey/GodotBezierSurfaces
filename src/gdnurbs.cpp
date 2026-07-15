@@ -264,18 +264,24 @@ void NURB::_process (
             for (int j = 0; j < 4; j++)
             {
                 ControlPoint* ControlPointI = CPStorage[i * 4 + j];
+                Vector4 CPVec4 = Vector4(
+                    ControlPointI->get_position().x,
+                    ControlPointI->get_position().y,
+                    ControlPointI->get_position().z,
+                    ControlPointI->get_weight()
+                );
                 if (
-                    CPNetwork[0](i, j) != ControlPointI->get_position().x ||
-                    CPNetwork[1](i, j) != ControlPointI->get_position().y ||
-                    CPNetwork[2](i, j) != ControlPointI->get_position().z ||
-                    CPNetwork[3](i, j) != ControlPointI->GetWeight()
-                ) // Replace 0 with the actual value you want to check
+                    CPNetwork[0](i, j) != CPVec4.x ||
+                    CPNetwork[1](i, j) != CPVec4.y ||
+                    CPNetwork[2](i, j) != CPVec4.z ||
+                    CPNetwork[3](i, j) != CPVec4.w
+                )
                 {
                     changed = true;
-                    CPNetwork[0](i, j) = ControlPointI->get_position().x;
-                    CPNetwork[1](i, j) = ControlPointI->get_position().y;
-                    CPNetwork[2](i, j) = ControlPointI->get_position().z;
-                    CPNetwork[3](i, j) = ControlPointI->GetWeight();
+                    CPNetwork[0](i, j) = CPVec4.x;
+                    CPNetwork[1](i, j) = CPVec4.y;
+                    CPNetwork[2](i, j) = CPVec4.z;
+                    CPNetwork[3](i, j) = CPVec4.w;
                 }
             }
         }
@@ -359,6 +365,8 @@ godot::ControlPoint* NURB::CreateControlPoint(
     ControlPointI->set_name(Prefix + String::num(UV.x, 0) + "_" + String::num(UV.y, 0));
 
     ControlPointI->set_position(Vector3(CPNetwork[0](UV.x, UV.y), CPNetwork[1](UV.x, UV.y), CPNetwork[2](UV.x, UV.y)));
+
+    ControlPointI->set_loc(UV);
 
     return ControlPointI;
 }
@@ -449,8 +457,8 @@ NURB::MeshData NURB::IterateOverParametricPoints(
             Vector4 ForkliftA = ComputeParametricPoint(uF, vF, CNWeighted, DB, B, VertexDensity);
             Vector4 ForkliftB = ComputeParametricPoint(uF, vF, CNWeighted, B, DB, VertexDensity);
 
-            Vector3 TangentA = Vector3(ForkliftA.x - (ForkliftA.w * ForkliftT.x), ForkliftA.y - (ForkliftA.w * ForkliftT.y), ForkliftA.z - (ForkliftA.w * ForkliftT.z));
-            Vector3 TangentB = Vector3(ForkliftB.x - (ForkliftB.w * ForkliftT.x), ForkliftB.y - (ForkliftB.w * ForkliftT.y), ForkliftB.z - (ForkliftB.w * ForkliftT.z));
+            Vector3 TangentA = Vector3((ForkliftA.x * ForkliftT.w) - (ForkliftA.w * ForkliftT.x), (ForkliftA.y * ForkliftT.w) - (ForkliftA.w * ForkliftT.y), (ForkliftA.z * ForkliftT.w) - (ForkliftA.w * ForkliftT.z));
+            Vector3 TangentB = Vector3((ForkliftB.x * ForkliftT.w) - (ForkliftB.w * ForkliftT.x), (ForkliftB.y * ForkliftT.w) - (ForkliftB.w * ForkliftT.y), (ForkliftB.z * ForkliftT.w) - (ForkliftB.w * ForkliftT.z));
             
             PositionsAndNormals.uvs.emplace_back(Vector2(uF, vF));
             PositionsAndNormals.positions.emplace_back(Vector3(ForkliftT.x / ForkliftT.w, ForkliftT.y / ForkliftT.w, ForkliftT.z / ForkliftT.w));
@@ -479,12 +487,7 @@ Vector4 NURB::ComputeParametricPoint(
 
     Eigen::Matrix<float, 1, 4> pub = (MB * pu).transpose();
     Eigen::Matrix<float, 4, 1> bpv = (NB * pv);
-/*
-    Point.x = (pub * CNW[0] * bpv)(0, 0);
-    Point.y = (pub * CNW[1] * bpv)(0, 0);
-    Point.z = (pub * CNW[2] * bpv)(0, 0);
-    Point.w = (pub * CNW[3] * bpv)(0, 0);
-*/
+
     Point.x = pub.dot(CNW[0] * bpv);
     Point.y = pub.dot(CNW[1] * bpv);
     Point.z = pub.dot(CNW[2] * bpv);

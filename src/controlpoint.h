@@ -8,23 +8,13 @@
 #include <godot_cpp/classes/collision_shape3d.hpp>
 #include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
-#include <godot_cpp/classes/array_mesh.hpp>
-#include <godot_cpp/classes/mesh.hpp>
-#include <godot_cpp/classes/sphere_mesh.hpp>
-#include <godot_cpp/classes/standard_material3d.hpp>
-#include <godot_cpp/classes/static_body3d.hpp>
 
 #include <godot_cpp/variant/array.hpp>
-#include <godot_cpp/variant/packed_vector2_array.hpp>
-#include <godot_cpp/variant/packed_vector3_array.hpp>
-#include <godot_cpp/variant/packed_vector4_array.hpp>
 #include <godot_cpp/variant/vector2i.hpp>
-#include <godot_cpp/variant/vector2.hpp>
-#include <godot_cpp/variant/vector3.hpp>
 
 
 #include <vector>
-#include <Eigen/Dense>
+
 
 
 
@@ -36,13 +26,17 @@ namespace godot {
 
         private:
             float Weight = 1.0f;
+            Vector2i Loc = Vector2i(-1, -1);
 
         protected:
-            static void _bind_methods();
+            static void _bind_methods ( );
 
         public:
-            void SetWeight(const float &W);
-            float GetWeight() const;
+            void set_weight ( const float &W );
+            float get_weight ( ) const;
+
+            void set_loc ( const Vector2i &L );
+            Vector2i get_loc ( ) const;
     };
 }
 
